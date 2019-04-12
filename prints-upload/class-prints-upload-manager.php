@@ -79,15 +79,25 @@ class Prints_Upload_Manager extends Websystems_Prints_Manager{
         wp_die( json_encode(  ['url' => wp_upload_dir()['baseurl']  . $temp_dir . '_THUMBS/' . $filename ]) );
     }
     public function clear_uploaded_prints_dir_salts_in_wc_session ( $cart_item_key ) {
-        $product_id = WC()->cart->get_cart_item( $cart_item_key )['data']->id;
+        $cart_item = WC()->cart->get_cart_item( $cart_item_key );
+        if( $cart_item['variation_id'] ) {
+            $product_id = $cart_item['variation_id'];
+        } else {            
+            $product_id = $cart_item['product_id'];
+        }
 
         $uploaded_prints_dir_salts_in_wc_session = WC()->session->get( 'uploaded_prints_dir_salts' );
+
         if( !$uploaded_prints_dir_salts_in_wc_session ) {
             $uploaded_prints_dir_salts_in_wc_session = [];
         } else {
             $uploaded_prints_dir_salts_in_wc_session = unserialize( $uploaded_prints_dir_salts_in_wc_session );
         }
-        unset( $uploaded_prints_dir_salts_in_wc_session[ $product_id ] );
+        if( is_array( $uploaded_prints_dir_salts_in_wc_session ) ) {
+            unset( $uploaded_prints_dir_salts_in_wc_session[ $product_id ] );
+        } else {
+            $uploaded_prints_dir_salts_in_wc_session = [];            
+        }
 
         WC()->session->set( 'uploaded_prints_dir_salts', serialize( $uploaded_prints_dir_salts_in_wc_session ) );
     }
@@ -127,11 +137,13 @@ class Prints_Upload_Manager extends Websystems_Prints_Manager{
     private function get_uploaded_prints_thumbnails_urls() {
         $uploaded_prints_thumbnails_urls = [];
         $uploaded_prints_dir_salts = WC()->session->get( 'uploaded_prints_dir_salts');
-        //var_dump( unserialize($uploaded_prints_dir_salts) );
         //$this->create_zip( 2807, 'sgt', 280, '5c83c5f0a8b7d' );
         if( $uploaded_prints_dir_salts ) {
-            foreach ( unserialize( $uploaded_prints_dir_salts )  as $product_id => $uploaded_prints_dir_salt ) {
-                $uploaded_prints_thumbnails_urls[ $product_id ] = $this->get_temp_dir_name( $product_id, $uploaded_prints_dir_salt ) . '_THUMBS';
+            $uploaded_prints_dir_salts = unserialize( $uploaded_prints_dir_salts );
+            if(is_array($uploaded_prints_dir_salts)) {
+                foreach (  $uploaded_prints_dir_salts as $product_id => $uploaded_prints_dir_salt ) {
+                 $uploaded_prints_thumbnails_urls[ $product_id ] = $this->get_temp_dir_name( $product_id, $uploaded_prints_dir_salt ) . '_THUMBS';
+                }
             }
         }
         return $uploaded_prints_thumbnails_urls;
