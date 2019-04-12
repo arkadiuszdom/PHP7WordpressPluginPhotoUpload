@@ -1,0 +1,12 @@
+.uploaded_image_container {
+	width: 100px;
+	height: 100px;
+	position: relative;
+}
+.uploaded_image_thumbnail {
+}
+.delete_uploaded_image {
+	position: absolute;
+	width: 20%;
+	height: 20%;
+}
